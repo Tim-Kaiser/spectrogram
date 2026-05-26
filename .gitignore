@@ -50,3 +50,8 @@ build/*
 
 #objects in resource folder
 !resources/objects/*
+
+
+#audio files other than the test file
+resources/audio/*
+!resources/audio/sine_wave_1000hz_44.1sr.wav
