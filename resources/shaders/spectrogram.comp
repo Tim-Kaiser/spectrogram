@@ -1,0 +1,35 @@
+#version 460
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding=0) buffer sampleData
+{
+	float samples[];
+};
+
+layout(std430, binding=1) buffer frequencyData
+{
+	float frequencies[];
+};
+
+layout(rgba32f, binding=2) uniform image2D spectrogramTex;
+
+uniform int u_time;
+uniform int u_width;
+uniform int u_height;
+
+
+
+void main() {
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    //if (texelCoord.x >= u_width || texelCoord.y >= u_height) {
+    //    return;
+    //}
+
+    //vec4 col = imageLoad(spectrogramTex, texelCoord);
+    vec4 col = vec4(texelCoord / vec2(u_width, u_height), u_time / 100.0, 1.);
+    //TODO
+
+    imageStore(spectrogramTex, texelCoord, col);
+
+}
