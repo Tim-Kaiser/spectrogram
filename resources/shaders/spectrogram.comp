@@ -13,23 +13,32 @@ layout(std430, binding=1) buffer frequencyData
 };
 
 layout(rgba32f, binding=2) uniform image2D spectrogramTex;
+layout(rgba32f, binding=3) uniform image2D shiftedSpectrogramTexture;
 
 uniform int u_time;
 uniform int u_width;
 uniform int u_height;
+uniform int u_frame; // framecount until u_frame = u_width
 
-
+// last column is empty: write frequency data to last column
+// last column is filled: shift all columns to the left, write frequency data to last column
 
 void main() {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-    //if (texelCoord.x >= u_width || texelCoord.y >= u_height) {
-    //    return;
-    //}
+    if (texelCoord.x >= u_width || texelCoord.y >= u_height) {
+        return;
+    }
 
-    //vec4 col = imageLoad(spectrogramTex, texelCoord);
-    vec4 col = vec4(texelCoord / vec2(u_width, u_height), u_time / 100.0, 1.);
-    //TODO
+    vec4 col = vec4(0.,0.,0., 1.);
 
-    imageStore(spectrogramTex, texelCoord, col);
+    if ((u_frame >= u_width) && (texelCoord.x > 0)) {
+        //shift left
+        ivec2 shiftedCoord = ivec2(texelCoord.x - 1, texelCoord.y);
+        col = imageLoad(spectrogramTex, texelCoord);
+        imageStore(shiftedSpectrogramTexture, shiftedCoord, col);
+    }
 
+    int idx = min(texelCoord.y, frequencies.length() - 1);
+    col.xyz = vec3(frequencies[idx]);
+    imageStore(shiftedSpectrogramTexture, ivec2(u_frame, texelCoord.y), col);
 }

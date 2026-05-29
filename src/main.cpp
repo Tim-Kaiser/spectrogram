@@ -18,9 +18,9 @@ int main() {
 
   Config *cfg = Config::getInstance();
   cfg->init("resources/config.json");
-  Window window(cfg->getWindowName(), 800, 600);
+  Window window(cfg->getWindowName(), 1900, 1000);
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/sine_wave_1000hz_44.1sr.wav");
+  AudioManager audioManager("resources/audio/sine.wav");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
@@ -30,16 +30,20 @@ int main() {
 
   Mesh mesh = loadObject("resources/objects/quad.obj");
 
-  GLuint spectrogramTextureID;
+  GLuint spectrogramTextureID, shiftedSpectrogramTextureID;
   createTexture(&spectrogramTextureID, window.getWidth(), window.getHeight());
+  createTexture(&shiftedSpectrogramTextureID, window.getWidth(),
+                window.getHeight());
 
-  audioManager.setVolume(0.2f);
+  audioManager.setVolume(1.5f);
   audioManager.play();
   audioManager.bindAudioBuffer();
 
   sf::Clock clock;
   clock.start();
+  int width, height;
 
+  int framecount = 0;
   while (window.running()) {
     glClear(GL_COLOR_BUFFER_BIT);
     int t = clock.getElapsedTime().asMilliseconds();
@@ -50,23 +54,32 @@ int main() {
 
     // without this, SendUniformData reads width and height as
     // glUniformMatrix4fv, fixed in newer RREAV version
-    int width, height;
     width = window.getWidth();
     height = window.getHeight();
     shaderManager.SendUniformData("u_width", width);
     shaderManager.SendUniformData("u_height", height);
     shaderManager.SendUniformData("u_time", t);
+    shaderManager.SendUniformData("u_frame", framecount);
+    if (framecount < width) {
+      framecount += 1;
+    }
+
     glBindImageTexture(2, spectrogramTextureID, 0, GL_FALSE, 0, GL_READ_WRITE,
                        GL_RGBA32F);
+    glBindImageTexture(3, shiftedSpectrogramTextureID, 0, GL_FALSE, 0,
+                       GL_READ_WRITE, GL_RGBA32F);
     glDispatchCompute((GLuint)width, (GLuint)height, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-    // Render shader
-    GLint texID = 0;
+    // Copy shifted spectrogram back to original texture
+    glCopyImageSubData(shiftedSpectrogramTextureID, GL_TEXTURE_2D, 0, 0, 0, 0,
+                       spectrogramTextureID, GL_TEXTURE_2D, 0, 0, 0, 0, width,
+                       height, 1);
 
+    // Render shader
     glUseProgram(renderShader->m_shaderProgramID);
     glActiveTexture(GL_TEXTURE0);
-    shaderManager.SendUniformData("u_spectrogramTex", texID);
+    shaderManager.SendUniformData("spectrogramTex", 0);
     glBindTexture(GL_TEXTURE_2D, spectrogramTextureID);
 
     mesh.render();
