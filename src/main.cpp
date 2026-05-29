@@ -20,7 +20,7 @@ int main() {
   cfg->init("resources/config.json");
   Window window(cfg->getWindowName(), 1900, 1000);
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/sine.wav");
+  AudioManager audioManager("resources/audio/redbone.ogg");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
@@ -38,6 +38,7 @@ int main() {
   audioManager.setVolume(1.5f);
   audioManager.play();
   audioManager.bindAudioBuffer();
+  audioManager.update();
 
   sf::Clock clock;
   clock.start();
@@ -45,12 +46,12 @@ int main() {
 
   int framecount = 0;
   while (window.running()) {
+    audioManager.update();
     glClear(GL_COLOR_BUFFER_BIT);
     int t = clock.getElapsedTime().asMilliseconds();
 
     // Compute shader dispatch
     glUseProgram(computeShader->m_shaderProgramID);
-    audioManager.update();
 
     // without this, SendUniformData reads width and height as
     // glUniformMatrix4fv, fixed in newer RREAV version
