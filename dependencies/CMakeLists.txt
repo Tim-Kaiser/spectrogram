@@ -3,6 +3,6 @@ include(FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(rreav
     GIT_REPOSITORY https://github.com/Tim-Kaiser/RREAV.git
-    GIT_TAG 1.5.1
+    GIT_TAG 1.5.2
     GIT_PROGRESS TRUE)
 FetchContent_MakeAvailable(rreav)

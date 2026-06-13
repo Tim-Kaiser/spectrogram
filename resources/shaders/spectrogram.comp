@@ -41,8 +41,10 @@ void main() {
     // Write frequency data: to current frame during fill phase, to last column during scroll phase
     int writeColumn = (u_frame >= u_width) ? (u_width - 1) : u_frame;
     if (texelCoord.x == writeColumn) {
-        int idx = min(texelCoord.y, frequencies.length() - 1);
-        col.xyz = vec3(frequencies[idx] > 0.9);
+        float s = float(frequencies.length() - 1) / float(u_height);
+        int idx = int(s * texelCoord.y);
+
+        col.xyz = vec3(frequencies[idx]);
         imageStore(shiftedSpectrogramTexture, ivec2(writeColumn, texelCoord.y), col);
     }
 }

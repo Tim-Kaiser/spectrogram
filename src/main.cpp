@@ -20,7 +20,7 @@ int main() {
   cfg->init("resources/config.json");
   Window window(cfg->getWindowName(), 1900, 1000);
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/redbone.ogg");
+  AudioManager audioManager("resources/audio/get_up.flac");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
