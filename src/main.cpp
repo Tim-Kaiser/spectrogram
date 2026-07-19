@@ -1,6 +1,5 @@
 #include "../include/rreav_includes.h"
 #include "SFML/System/Clock.hpp"
-#include <iostream>
 #include <memory>
 
 void createTexture(GLuint *textureID, int width, int height) {
@@ -18,9 +17,9 @@ int main() {
 
   Config *cfg = Config::getInstance();
   cfg->init("resources/config.json");
-  Window window(cfg->getWindowName(), 1900, 1000);
+  Window window(cfg->getWindowName(), 1900, 512);
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/get_up.flac");
+  AudioManager audioManager("resources/audio/pandora.flac");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
@@ -35,10 +34,10 @@ int main() {
   createTexture(&shiftedSpectrogramTextureID, window.getWidth(),
                 window.getHeight());
 
-  audioManager.setVolume(1.5f);
+  audioManager.setVolume(2.0f);
   audioManager.play();
   audioManager.bindAudioBuffer();
-  audioManager.update();
+  audioManager.update(true);
 
   sf::Clock clock;
   clock.start();
@@ -46,7 +45,7 @@ int main() {
 
   int framecount = 0;
   while (window.running()) {
-    audioManager.update();
+    audioManager.update(true);
     glClear(GL_COLOR_BUFFER_BIT);
     int t = clock.getElapsedTime().asMilliseconds();
 

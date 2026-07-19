@@ -37,14 +37,23 @@ void main() {
         col = imageLoad(spectrogramTex, texelCoord);
         imageStore(shiftedSpectrogramTexture, shiftedCoord, col);
     }
-
+    col = vec4(0.,0.,0., 1.);
     // Write frequency data: to current frame during fill phase, to last column during scroll phase
     int writeColumn = (u_frame >= u_width) ? (u_width - 1) : u_frame;
     if (texelCoord.x == writeColumn) {
         float s = float(frequencies.length() - 1) / float(u_height);
         int idx = int(s * texelCoord.y);
+        float f = frequencies[idx];
 
-        col.xyz = vec3(frequencies[idx]);
+        if(f > 0.8 ){
+            col.x = 1.0;
+        }else if(f > 0.5 ){
+            col.z = 0.8;
+        }else if(f > 0.1 ){
+            col.yz = vec2(0.5);
+        }else if(f > 0.05){
+            col.y = 0.3;
+        }
         imageStore(shiftedSpectrogramTexture, ivec2(writeColumn, texelCoord.y), col);
     }
 }
