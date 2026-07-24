@@ -17,9 +17,10 @@ int main() {
 
   Config *cfg = Config::getInstance();
   cfg->init("resources/config.json");
-  Window window(cfg->getWindowName(), 1900, 512);
+  Window window(cfg->getWindowName(), 2560, 1080);
+  // window.setWindowedFullscreen();
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/pandora.flac");
+  AudioManager audioManager("resources/audio/sine.wav");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
@@ -34,15 +35,15 @@ int main() {
   createTexture(&shiftedSpectrogramTextureID, window.getWidth(),
                 window.getHeight());
 
-  audioManager.setVolume(2.0f);
+  audioManager.setVolume(5.0f);
   audioManager.play();
   audioManager.bindAudioBuffer();
   audioManager.update(true);
 
   sf::Clock clock;
   clock.start();
-  int width, height;
 
+  int width, height;
   int framecount = 0;
   while (window.running()) {
     audioManager.update(true);
@@ -52,8 +53,6 @@ int main() {
     // Compute shader dispatch
     glUseProgram(computeShader->m_shaderProgramID);
 
-    // without this, SendUniformData reads width and height as
-    // glUniformMatrix4fv, fixed in newer RREAV version
     width = window.getWidth();
     height = window.getHeight();
     shaderManager.SendUniformData("u_width", width);
