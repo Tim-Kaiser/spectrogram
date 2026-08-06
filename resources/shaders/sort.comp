@@ -1,0 +1,65 @@
+#version 460
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(rgba32f, binding=2) uniform image2D spectrogramTex;
+
+uniform int u_time;
+uniform int u_width;
+uniform int u_height;
+uniform int u_frame;
+
+ivec2 up = ivec2(0.0, 1.0);
+ivec2 down = ivec2(0.0, -1.0);
+ivec2 left = ivec2(-1.0, 0.0);
+ivec2 right = ivec2(1.0,0.0);
+
+
+void main() {
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    if(texelCoord.x < u_width * 0.3 || texelCoord.x > u_width * 0.6){
+        return;
+    }
+
+
+    vec4 spec = imageLoad(spectrogramTex, texelCoord);
+    vec4 spec_up = imageLoad(spectrogramTex, texelCoord + up);
+    vec4 spec_down = imageLoad(spectrogramTex, texelCoord + down);
+    vec4 spec_left = imageLoad(spectrogramTex, texelCoord + left);
+    vec4 spec_right = imageLoad(spectrogramTex, texelCoord + right);
+
+    if(int(mod(float(u_frame), 4.0)) < 2.0){
+        if(mod(u_frame + texelCoord.y, 2) == 0){
+            if(length(spec_down) > length(spec)){
+                vec4 tmp = spec;
+                spec = spec_down;
+                spec_down = tmp;
+            }
+        
+        }else if(length(spec_up) < length(spec)){
+            vec4 tmp = spec;
+            spec = spec_up;
+            spec_up = tmp;
+        }
+    }else{
+        if(int(mod(float(u_frame + texelCoord.x), 2.0)) == 0){
+            if(spec_right.x > spec.x){
+                vec4 tmp = spec;
+                spec = spec_right;
+                spec_right = tmp;
+            }
+        
+        }else if(length(spec_left) < length(spec)){
+            vec4 tmp = spec;
+            spec = spec_left;
+            spec_left = tmp;
+        }
+    }
+
+
+    imageStore(spectrogramTex, texelCoord, spec);
+    imageStore(spectrogramTex, texelCoord + down, spec_down);
+    imageStore(spectrogramTex, texelCoord + right, spec_right);
+    imageStore(spectrogramTex, texelCoord + up, spec_up);
+    imageStore(spectrogramTex, texelCoord + left, spec_left);
+}

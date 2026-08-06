@@ -20,13 +20,16 @@ int main() {
   Window window(cfg->getWindowName(), 2560, 1080);
   // window.setWindowedFullscreen();
   ShaderManager shaderManager;
-  AudioManager audioManager("resources/audio/sine.wav");
+  AudioManager audioManager("resources/audio/kalmia.flac");
 
   std::unique_ptr<Shader> renderShader = shaderManager.CreateShaders(
       "resources/shaders/main.vert", "resources/shaders/main.frag");
 
-  std::unique_ptr<ComputeShader> computeShader =
+  std::unique_ptr<ComputeShader> spectrogramShader =
       shaderManager.CreateComputeShader("resources/shaders/spectrogram.comp");
+
+  std::unique_ptr<ComputeShader> sortShader =
+      shaderManager.CreateComputeShader("resources/shaders/sort.comp");
 
   Mesh mesh = loadObject("resources/objects/quad.obj");
 
@@ -35,7 +38,7 @@ int main() {
   createTexture(&shiftedSpectrogramTextureID, window.getWidth(),
                 window.getHeight());
 
-  audioManager.setVolume(5.0f);
+  audioManager.setVolume(7.0f);
   audioManager.play();
   audioManager.bindAudioBuffer();
   audioManager.update(true);
@@ -50,8 +53,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
     int t = clock.getElapsedTime().asMilliseconds();
 
-    // Compute shader dispatch
-    glUseProgram(computeShader->m_shaderProgramID);
+    glUseProgram(spectrogramShader->m_shaderProgramID);
 
     width = window.getWidth();
     height = window.getHeight();
@@ -59,9 +61,6 @@ int main() {
     shaderManager.SendUniformData("u_height", height);
     shaderManager.SendUniformData("u_time", t);
     shaderManager.SendUniformData("u_frame", framecount);
-    if (framecount < width) {
-      framecount += 1;
-    }
 
     glBindImageTexture(2, spectrogramTextureID, 0, GL_FALSE, 0, GL_READ_WRITE,
                        GL_RGBA32F);
@@ -75,6 +74,17 @@ int main() {
                        spectrogramTextureID, GL_TEXTURE_2D, 0, 0, 0, 0, width,
                        height, 1);
 
+    glUseProgram(sortShader->m_shaderProgramID);
+    shaderManager.SendUniformData("u_width", width);
+    shaderManager.SendUniformData("u_height", height);
+    shaderManager.SendUniformData("u_time", t);
+    shaderManager.SendUniformData("u_frame", framecount);
+
+    glBindImageTexture(2, spectrogramTextureID, 0, GL_FALSE, 0, GL_READ_WRITE,
+                       GL_RGBA32F);
+    glDispatchCompute((GLuint)width, (GLuint)height, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
     // Render shader
     glUseProgram(renderShader->m_shaderProgramID);
     glActiveTexture(GL_TEXTURE0);
@@ -84,6 +94,8 @@ int main() {
     mesh.render();
     window.update();
     window.draw();
+
+    framecount += 1;
   }
 
   return 0;

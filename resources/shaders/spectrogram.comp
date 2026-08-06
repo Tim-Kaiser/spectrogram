@@ -18,7 +18,7 @@ layout(rgba32f, binding=3) uniform image2D shiftedSpectrogramTexture;
 uniform int u_time;
 uniform int u_width;
 uniform int u_height;
-uniform int u_frame; // framecount until u_frame = u_width
+uniform int u_frame; 
 
 // last column is empty: write frequency data to last column
 // last column is filled: shift all columns to the left, write frequency data to last column
@@ -37,25 +37,27 @@ void main() {
         col = imageLoad(spectrogramTex, texelCoord);
         imageStore(shiftedSpectrogramTexture, shiftedCoord, col);
     }
-    col = vec4(0.05,0.05,0.01, 1.);
-    // Write frequency data: to current frame during fill phase, to last column during scroll phase
+    col = vec4(0.0,0.0,0.0, 1.);
+    // Write frequency data: to col = current frame during fill phase, to last column during scroll phase
     int writeColumn = (u_frame >= u_width) ? (u_width - 1) : u_frame;
     if (texelCoord.x == writeColumn) {
         float s = float(frequencies.length() / 2.0 - 1) / float(u_height);
         int idx = int(s * texelCoord.y);
         float f = frequencies[idx];
 
-        if(f > 0.8 ){
-            col.x = 1.0;
-        }else if(f > 0.5 ){
-            col.z = 0.8;
-        }else if(f > 0.1 ){
-            col.yz = vec2(0.5);
-        }else if(f > 0.05){
-            col.y = 0.3;
-        }else if(f > 0.02){
-            col.y = 0.2;
-        }
+        col = vec4(2.0 * smoothstep(0.0, 1.0, f));
+
+        // if(f > 0.8 ){
+        //     col.xyz = vec3(1.0);
+        // }else if(f > 0.5 ){
+        //     col.xyz = vec3(0.9);
+        // }else if(f > 0.1 ){
+        //     col.xyz = vec3(0.8);
+        // }else if(f > 0.05){
+        //     col.xyz = vec3(0.5);
+        // }else if(f > 0.02){
+        //     col.xyz = vec3(0.1);
+        // }
         imageStore(shiftedSpectrogramTexture, ivec2(writeColumn, texelCoord.y), col);
     }
 }
